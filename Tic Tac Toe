@@ -1,244 +1,153 @@
 #include <iostream>
-#include <list>
-#include <cstdlib>
-#include <string>
+#include <vector>
+#include <algorithm>
 #include <ctime>
-using namespace std;
+#include <cstdlib>
 
-// Struct to hold the winning combinations
-typedef struct {
-    int* positions;
-} WinningCombo;
-
-// Player class
-class Player {
-private:
-    string name;
-    int score;
-public:
-    Player() : Player("") {}
-    Player(string n) : name(n), score(0) {}
-
-    void incrementScore() { score++; }
-    int getScore() const { return score; }
-    string getName() const { return name; }
-};
-
-// TicTacToe game class
 class TicTacToe {
-private:
-    char board[9];
-    int availablePositions[9];
-    int gameActive, isVsComputer;
-    int availableCount;
-    WinningCombo winCombos[8];
-
-    void showBoard() const {
-        cout << endl;
-        cout << "   |   |   " << endl;
-        cout << " " << board[0] << " | " << board[1] << " | " << board[2] << endl;
-        cout << "   |   |   " << endl;
-        cout << "-----------" << endl;
-        cout << "   |   |   " << endl;
-        cout << " " << board[3] << " | " << board[4] << " | " << board[5] << endl;
-        cout << "   |   |   " << endl;
-        cout << "-----------" << endl;
-        cout << "   |   |   " << endl;
-        cout << " " << board[6] << " | " << board[7] << " | " << board[8] << endl;
-        cout << "   |   |   " << endl;
-        cout << endl;
-    }
-
-    void computerMove() {
-        int pos;
-        pos = rand() % 9;
-        if (availablePositions[pos] == 1) {
-            if (availableCount < 0)
-                return;
-            computerMove();
-        } else {
-            cout << "Computer chose: " << pos + 1 << endl;
-            availablePositions[pos] = 1;
-            availableCount -= 1;
-            board[pos] = 'O';
-        }
-    }
-
-    void playerMove(Player& player) {
-        int pos;
-        cout << endl;
-        cout << "\t" << player.getName() << "'s Turn: ";
-        cout << "\t Enter the position: ";
-        cin >> pos;
-        pos -= 1;
-        if (availablePositions[pos] == 1) {
-            cout << "-----Position not available-------" << endl;
-            playerMove(player);
-        } else {
-            availablePositions[pos] = 1;
-            availableCount -= 1;
-            player.getName() == "Player 1" ? board[pos] = 'X' : board[pos] = 'O';
-        }
-    }
-
-    void checkWinner(Player& p1, Player& p2) {
-        bool winFlag = false;
-        char firstSymbol;
-        for (int i = 0; i < 8; i++) {
-            firstSymbol = board[winCombos[i].positions[0]];
-
-            if ((firstSymbol != 'X') && (firstSymbol != 'O')) {
-                winFlag = false;
-                continue;
-            }
-            winFlag = true;
-            for (int j = 0; j < 3; j++) {
-                if (firstSymbol != board[winCombos[i].positions[j]]) {
-                    winFlag = false;
-                    break;
-                }
-            }
-            if (winFlag) {
-                gameActive = 0;
-                if (firstSymbol == 'X') {
-                    cout << "-----------------------" << endl;
-                    cout << "\t Player 1 WON" << endl;
-                    cout << "-----------------------" << endl;
-                    p1.incrementScore();
-                } else {
-                    p2.incrementScore();
-                    if (isVsComputer) {
-                        cout << "-----------------------" << endl;
-                        cout << "\t Computer WON" << endl;
-                        cout << "-----------------------" << endl;
-                    } else {
-                        cout << "-----------------------" << endl;
-                        cout << "\t Player 2 WON" << endl;
-                        cout << "-----------------------" << endl;
-                    }
-                }
-                showScores(p1, p2);
-                break;
-            }
-        }
-    }
-
-    void playGame(Player& p1, Player& p2) {
-        char rematch = '\0';
-        int currentPlayer = 0;
-        gameActive = 1;
-        showBoard();
-        while ((availableCount > 0) && (gameActive != 0)) {
-            if (isVsComputer)
-                currentPlayer == 1 ? computerMove() : playerMove(p2);
-            else
-                currentPlayer == 1 ? playerMove(p1) : playerMove(p2);
-            currentPlayer = !currentPlayer;
-            showBoard();
-            checkWinner(p1, p2);
-        }
-        if (availableCount <= 0) {
-            cout << "      -----------------------" << endl;
-            cout << "\t No WINNER" << endl;
-            cout << "      -----------------------" << endl;
-        }
-        cout << endl;
-        cout << "Rematch? (Y/N): ";
-        cin >> rematch;
-        if ((rematch == 'Y') || (rematch == 'y')) {
-            initialize();
-            playGame(p1, p2);
-        }
-    }
-
-    void showScores(const Player& p1, const Player& p2) const {
-        cout << endl;
-        cout << "\t SCORE: \t";
-        if (isVsComputer)
-            cout << " Player 1: " << p1.getScore() << " \t Computer: " << p2.getScore() << endl;
-        else
-            cout << " Player 1: " << p1.getScore() << " \t Player 2: " << p2.getScore() << endl;
-    }
-
 public:
-    TicTacToe() : availableCount(0), gameActive(1), isVsComputer(0) {
-        initialize();
-        winCombos[0].positions = new int[3]{0, 1, 2};
-        winCombos[1].positions = new int[3]{3, 4, 5};
-        winCombos[2].positions = new int[3]{6, 7, 8};
-        winCombos[3].positions = new int[3]{0, 3, 6};
-        winCombos[4].positions = new int[3]{1, 4, 7};
-        winCombos[5].positions = new int[3]{2, 5, 8};
-        winCombos[6].positions = new int[3]{0, 4, 8};
-        winCombos[7].positions = new int[3]{2, 4, 6};
-    }
+    TicTacToe() : board(9, ' '), current_winner(' ') {}
 
-    void initialize() {
-        gameActive = 1;
-        availableCount = 0;
-        srand(time(0));
-        for (size_t i = 0; i < 9; i++) {
-            availablePositions[i] = 0;
-            board[i] = (i + 1) + '0';
-            availableCount++;
+    void displayBoard() const {
+        std::cout << "\n";
+        for (int i = 0; i < 3; ++i) {
+            std::cout << "| " << board[i * 3] << " | " << board[i * 3 + 1] << " | " << board[i * 3 + 2] << " |\n";
         }
+        std::cout << "\n";
     }
 
-    void singlePlayerGame() {
-        // Creating Player
-        Player player1("Player 1");
-        Player computer("Computer");
-        cout << "       -----------------------" << endl;
-        cout << "\t Player 1: X \t Computer: O" << endl;
-        cout << "       -----------------------" << endl;
-        cout << endl;
-        isVsComputer = 1;
-        playGame(computer, player1);
+    bool makeMove(int position, char player) {
+        if (board[position] == ' ') {
+            board[position] = player;
+            if (isWinner(position, player)) {
+                current_winner = player;
+            }
+            return true;
+        }
+        return false;
     }
 
-    void multiPlayerGame() {
-        // Creating Players
-        Player player1("Player 1");
-        Player player2("Player 2");
-        cout << "       -----------------------" << endl;
-        cout << "\t Player 1: X \t Player 2: O" << endl;
-        cout << "       -----------------------" << endl;
-        cout << endl;
-        isVsComputer = 0;
-        playGame(player1, player2);
+    bool isBoardFull() const {
+        return std::none_of(board.begin(), board.end(), [](char c){ return c == ' '; });
+    }
+
+    char getWinner() const {
+        return current_winner;
+    }
+
+    void resetBoard() {
+        std::fill(board.begin(), board.end(), ' ');
+        current_winner = ' ';
+    }
+
+private:
+    std::vector<char> board;
+    char current_winner;
+
+    bool isWinner(int position, char player) const {
+        int row = position / 3;
+        if (board[row * 3] == player && board[row * 3 + 1] == player && board[row * 3 + 2] == player) {
+            return true;
+        }
+
+        int col = position % 3;
+        if (board[col] == player && board[col + 3] == player && board[col + 6] == player) {
+            return true;
+        }
+
+        if (position % 2 == 0) {
+            if (board[0] == player && board[4] == player && board[8] == player) {
+                return true;
+            }
+            if (board[2] == player && board[4] == player && board[6] == player) {
+                return true;
+            }
+        }
+
+        return false;
     }
 };
+
+int getComputerMove(TicTacToe& game) {
+    std::vector<int> available_moves;
+    for (int i = 0; i < 9; ++i) {
+        if (game.makeMove(i, ' ')) { // This checks if the position is available
+            available_moves.push_back(i);
+        }
+    }
+    if (!available_moves.empty()) {
+        return available_moves[rand() % available_moves.size()];
+    }
+    return -1;
+}
 
 int main() {
-    int choice;
+    srand(static_cast<unsigned int>(time(nullptr)));
+    TicTacToe game;
+    std::string userInput;
+    int userMove;
+
+    std::cout << "Welcome to Tic-Tac-Toe!\n";
 
     while (true) {
-        cout << "      ----------MENU----------" << endl;
-        cout << "\t 1. Single Player Game" << endl;
-        cout << "\t 2. Two Player Game" << endl;
-        cout << "\t 3. Exit " << endl;
-        cout << "      ------------------------" << endl;
-        cout << endl;
-        cout << "\t Select an option: ";
-        cin >> choice;
-        switch (choice) {
-        case 1: {
-            TicTacToe game;
-            game.initialize();
-            game.singlePlayerGame();
+        game.displayBoard();
+        std::cout << "Enter your move (0-8), 'reset' to start over, or 'quit' to exit: ";
+        std::cin >> userInput;
+
+        if (userInput == "reset") {
+            game.resetBoard();
+            std::cout << "Game reset!\n";
+            continue;
+        } else if (userInput == "quit") {
+            std::cout << "Quitting the game. Goodbye!\n";
+            break;
         }
-        break;
-        case 2: {
-            TicTacToe game;
-            game.initialize();
-            game.multiPlayerGame();
+
+        try {
+            userMove = std::stoi(userInput);
+            if (userMove < 0 || userMove > 8) {
+                std::cout << "Invalid move! Enter a number between 0 and 8.\n";
+                continue;
+            }
+        } catch (...) {
+            std::cout << "Invalid input! Enter a number between 0 and 8, 'reset', or 'quit'.\n";
+            continue;
         }
-        break;
-        case 3:
-            return 0;
-        default:
-            cout << "OOPs Invalid Option! TRY AGAIN";
+
+        if (!game.makeMove(userMove, 'X')) {
+            std::cout << "Invalid move! Square already occupied.\n";
+            continue;
+        }
+
+        if (game.getWinner() == 'X') {
+            game.displayBoard();
+            std::cout << "You win! Congratulations!\n";
+            break;
+        }
+
+        if (game.isBoardFull()) {
+            game.displayBoard();
+            std::cout << "The game is a tie!\n";
+            break;
+        }
+
+        int computerMove = getComputerMove(game);
+        if (computerMove != -1) {
+            game.makeMove(computerMove, 'O');
+        }
+
+        if (game.getWinner() == 'O') {
+            game.displayBoard();
+            std::cout << "Computer wins! Better luck next time.\n";
+            break;
+        }
+
+        if (game.isBoardFull()) {
+            game.displayBoard();
+            std::cout << "The game is a tie!\n";
+            break;
         }
     }
+
     return 0;
 }
