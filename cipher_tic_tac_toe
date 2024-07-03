@@ -1,0 +1,153 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <ctime>
+#include <cstdlib>
+
+class TicTacToe {
+public:
+    TicTacToe() : board(9, ' '), current_winner(' ') {}
+
+    void displayBoard() const {
+        std::cout << "\n";
+        for (int i = 0; i < 3; ++i) {
+            std::cout << "| " << board[i * 3] << " | " << board[i * 3 + 1] << " | " << board[i * 3 + 2] << " |\n";
+        }
+        std::cout << "\n";
+    }
+
+    bool makeMove(int position, char player) {
+        if (board[position] == ' ') {
+            board[position] = player;
+            if (isWinner(position, player)) {
+                current_winner = player;
+            }
+            return true;
+        }
+        return false;
+    }
+
+    bool isBoardFull() const {
+        return std::none_of(board.begin(), board.end(), [](char c){ return c == ' '; });
+    }
+
+    char getWinner() const {
+        return current_winner;
+    }
+
+    void resetBoard() {
+        std::fill(board.begin(), board.end(), ' ');
+        current_winner = ' ';
+    }
+
+private:
+    std::vector<char> board;
+    char current_winner;
+
+    bool isWinner(int position, char player) const {
+        int row = position / 3;
+        if (board[row * 3] == player && board[row * 3 + 1] == player && board[row * 3 + 2] == player) {
+            return true;
+        }
+
+        int col = position % 3;
+        if (board[col] == player && board[col + 3] == player && board[col + 6] == player) {
+            return true;
+        }
+
+        if (position % 2 == 0) {
+            if (board[0] == player && board[4] == player && board[8] == player) {
+                return true;
+            }
+            if (board[2] == player && board[4] == player && board[6] == player) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+};
+
+int getComputerMove(TicTacToe& game) {
+    std::vector<int> available_moves;
+    for (int i = 0; i < 9; ++i) {
+        if (game.makeMove(i, ' ')) { // This checks if the position is available
+            available_moves.push_back(i);
+        }
+    }
+    if (!available_moves.empty()) {
+        return available_moves[rand() % available_moves.size()];
+    }
+    return -1;
+}
+
+int main() {
+    srand(static_cast<unsigned int>(time(nullptr)));
+    TicTacToe game;
+    std::string userInput;
+    int userMove;
+
+    std::cout << "Welcome to Tic-Tac-Toe!\n";
+
+    while (true) {
+        game.displayBoard();
+        std::cout << "Enter your move (0-8), 'reset' to start over, or 'quit' to exit: ";
+        std::cin >> userInput;
+
+        if (userInput == "reset") {
+            game.resetBoard();
+            std::cout << "Game reset!\n";
+            continue;
+        } else if (userInput == "quit") {
+            std::cout << "Quitting the game. Goodbye!\n";
+            break;
+        }
+
+        try {
+            userMove = std::stoi(userInput);
+            if (userMove < 0 || userMove > 8) {
+                std::cout << "Invalid move! Enter a number between 0 and 8.\n";
+                continue;
+            }
+        } catch (...) {
+            std::cout << "Invalid input! Enter a number between 0 and 8, 'reset', or 'quit'.\n";
+            continue;
+        }
+
+        if (!game.makeMove(userMove, 'X')) {
+            std::cout << "Invalid move! Square already occupied.\n";
+            continue;
+        }
+
+        if (game.getWinner() == 'X') {
+            game.displayBoard();
+            std::cout << "You win! Congratulations!\n";
+            break;
+        }
+
+        if (game.isBoardFull()) {
+            game.displayBoard();
+            std::cout << "The game is a tie!\n";
+            break;
+        }
+
+        int computerMove = getComputerMove(game);
+        if (computerMove != -1) {
+            game.makeMove(computerMove, 'O');
+        }
+
+        if (game.getWinner() == 'O') {
+            game.displayBoard();
+            std::cout << "Computer wins! Better luck next time.\n";
+            break;
+        }
+
+        if (game.isBoardFull()) {
+            game.displayBoard();
+            std::cout << "The game is a tie!\n";
+            break;
+        }
+    }
+
+    return 0;
+}
